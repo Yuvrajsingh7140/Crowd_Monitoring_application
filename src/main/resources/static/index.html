@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crowd Monitoring System - Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 1rem 2rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .header h1 {
+            color: #2c3e50;
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .header p {
+            color: #7f8c8d;
+            font-size: 1rem;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            backdrop-filter: blur(10px);
+            transition: transform 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .stat-card h3 {
+            color: #2c3e50;
+            font-size: 1.1rem;
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            color: #7f8c8d;
+            font-size: 0.9rem;
+        }
+
+        .safe { color: #27ae60; }
+        .caution { color: #f39c12; }
+        .warning { color: #e67e22; }
+        .critical { color: #e74c3c; }
+        .emergency { color: #c0392b; }
+
+        .zones-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .zone-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .zone-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .zone-name {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        .zone-status {
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .occupancy-bar {
+            width: 100%;
+            height: 8px;
+            background: #ecf0f1;
+            border-radius: 4px;
+            margin: 1rem 0;
+            overflow: hidden;
+        }
+
+        .occupancy-fill {
+            height: 100%;
+            transition: width 0.3s ease;
+        }
+
+        .occupancy-text {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.9rem;
+            color: #7f8c8d;
+        }
+
+        .refresh-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 0.8rem 2rem;
+            border-radius: 25px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        .refresh-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .last-update {
+            text-align: center;
+            color: #7f8c8d;
+            margin-top: 2rem;
+            font-size: 0.9rem;
+        }
+
+        .api-info {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-top: 2rem;
+            backdrop-filter: blur(10px);
+        }
+
+        .api-info h3 {
+            color: white;
+            margin-bottom: 0.5rem;
+        }
+
+        .api-info a {
+            color: #74b9ff;
+            text-decoration: none;
+            display: block;
+            margin: 0.3rem 0;
+        }
+
+        .api-info a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🚨 Crowd Monitoring System</h1>
+        <p>Real-time Stampede Prevention and Safety Management Dashboard</p>
+    </div>
+
+    <div class="container">
+        <div class="stats-grid" id="statsGrid">
+            <div class="stat-card">
+                <h3>Total Zones</h3>
+                <div class="stat-value" id="totalZones">-</div>
+                <div class="stat-label">Monitored Areas</div>
+            </div>
+            <div class="stat-card">
+                <h3>Active Alerts</h3>
+                <div class="stat-value critical" id="activeAlerts">-</div>
+                <div class="stat-label">Requiring Attention</div>
+            </div>
+            <div class="stat-card">
+                <h3>Emergency Zones</h3>
+                <div class="stat-value emergency" id="emergencyZones">-</div>
+                <div class="stat-label">Critical Status</div>
+            </div>
+            <div class="stat-card">
+                <h3>System Status</h3>
+                <div class="stat-value" id="systemStatus">-</div>
+                <div class="stat-label">Overall Health</div>
+            </div>
+        </div>
+
+        <div style="text-align: center; margin: 2rem 0;">
+            <button class="refresh-btn" onclick="loadDashboardData()">🔄 Refresh Data</button>
+        </div>
+
+        <div class="zones-grid" id="zonesGrid">
+            <!-- Zone cards will be dynamically loaded here -->
+        </div>
+
+        <div class="last-update">
+            Last Updated: <span id="lastUpdate">-</span>
+        </div>
+
+        <div class="api-info">
+            <h3>🔗 API Endpoints</h3>
+            <a href="/api/dashboard/overview" target="_blank">📊 Dashboard Overview API</a>
+            <a href="/api/zones" target="_blank">🏢 Zones API</a>
+            <a href="/api/alerts" target="_blank">🚨 Alerts API</a>
+            <a href="/h2-console" target="_blank">🗄️ Database Console (H2)</a>
+        </div>
+    </div>
+
+    <script>
+        function getStatusClass(status) {
+            return status.toLowerCase();
+        }
+
+        function getStatusColor(status) {
+            const colors = {
+                'SAFE': '#27ae60',
+                'CAUTION': '#f39c12', 
+                'WARNING': '#e67e22',
+                'CRITICAL': '#e74c3c',
+                'EMERGENCY': '#c0392b'
+            };
+            return colors[status] || '#95a5a6';
+        }
+
+        function createZoneCard(zone) {
+            const statusClass = getStatusClass(zone.status);
+            const statusColor = getStatusColor(zone.status);
+
+            return `
+                <div class="zone-card">
+                    <div class="zone-header">
+                        <div class="zone-name">${zone.name}</div>
+                        <div class="zone-status" style="background-color: ${statusColor}; color: white;">
+                            ${zone.status}
+                        </div>
+                    </div>
+                    <div class="occupancy-bar">
+                        <div class="occupancy-fill" style="width: ${zone.densityPercentage}%; background-color: ${statusColor};"></div>
+                    </div>
+                    <div class="occupancy-text">
+                        <span>${zone.currentOccupancy} / ${zone.capacity} people</span>
+                        <span>${zone.densityPercentage.toFixed(1)}%</span>
+                    </div>
+                    <div class="stat-label">Last updated: ${new Date(zone.lastUpdated).toLocaleTimeString()}</div>
+                </div>
+            `;
+        }
+
+        async function loadDashboardData() {
+            try {
+                const response = await fetch('/api/dashboard/overview');
+                const data = await response.json();
+
+                // Update statistics
+                document.getElementById('totalZones').textContent = data.zones.total;
+                document.getElementById('activeAlerts').textContent = data.alerts.active;
+                document.getElementById('emergencyZones').textContent = data.zones.emergency;
+                document.getElementById('systemStatus').textContent = data.status;
+                document.getElementById('systemStatus').className = 'stat-value ' + getStatusClass(data.status);
+
+                // Update zones grid
+                const zonesGrid = document.getElementById('zonesGrid');
+                zonesGrid.innerHTML = data.zones.allZones.map(createZoneCard).join('');
+
+                // Update last update time
+                document.getElementById('lastUpdate').textContent = new Date(data.lastUpdate).toLocaleString();
+
+            } catch (error) {
+                console.error('Error loading dashboard data:', error);
+                document.getElementById('systemStatus').textContent = 'ERROR';
+                document.getElementById('systemStatus').className = 'stat-value critical';
+            }
+        }
+
+        // Load data on page load
+        document.addEventListener('DOMContentLoaded', loadDashboardData);
+
+        // Auto-refresh every 30 seconds
+        setInterval(loadDashboardData, 30000);
+    </script>
+</body>
+</html>
